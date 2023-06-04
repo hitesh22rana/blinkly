@@ -8,10 +8,11 @@ import (
 )
 
 var Ctx = context.Background()
-var Addr = os.Getenv("DB_ADDR")
-var Password = os.Getenv("DB_PASS")
 
 func CreateClient(dbNo int) *redis.Client {
+	var Addr = os.Getenv("DB_ADDR")
+	var Password = os.Getenv("DB_PASS")
+
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     Addr,
 		Password: Password,

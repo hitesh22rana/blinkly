@@ -21,3 +21,6 @@
 go.work
 
 tmp
+/api/.env
+api/.env
+*/.env

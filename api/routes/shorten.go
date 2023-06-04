@@ -5,12 +5,12 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/hitesh22rana/blinkly/database"
 	"github.com/hitesh22rana/blinkly/helpers"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -28,10 +28,10 @@ type response struct {
 	XRateLimitReset time.Duration `json:"rate_limit_reset"`
 }
 
-var API_QUOTA string = os.Getenv("API_QUOTA")
-var API_DOMAIN string = os.Getenv("API_DOMAIN")
-
 func ShortenURL(c *fiber.Ctx) error {
+	var API_QUOTA string = os.Getenv("API_QUOTA")
+	var API_DOMAIN string = os.Getenv("API_DOMAIN")
+
 	body := new(request)
 
 	if err := c.BodyParser(&body); err != nil {

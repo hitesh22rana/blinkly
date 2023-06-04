@@ -1,6 +1,6 @@
 FROM golang:alpine as builder
 
-RUN mdkir /build
+RUN mkdir /build
 
 ADD . /build/
 
