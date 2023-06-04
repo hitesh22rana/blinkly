@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+var Domain = os.Getenv("DOMAIN")
+
 func EnforceHTTP(url string) string {
 	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
 		return "http://" + url
@@ -14,9 +16,7 @@ func EnforceHTTP(url string) string {
 }
 
 func RemoveDomainError(url string) bool {
-	DOMAIN := os.Getenv("DOMAIN")
-
-	if url == DOMAIN {
+	if url == Domain {
 		return false
 	}
 
@@ -25,5 +25,5 @@ func RemoveDomainError(url string) bool {
 	newURL = strings.Replace(newURL, "www.", "", 1)
 	newURL = strings.Split(newURL, "/")[0]
 
-	return newURL != DOMAIN
+	return newURL != Domain
 }
