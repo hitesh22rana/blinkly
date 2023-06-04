@@ -9,10 +9,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/joho/godotenv"
+
+	"github.com/hitesh22rana/blinkly/routes"
 )
 
 func setupRoutes(app *fiber.App) {
-	app.Get("/:url", routes.ResolveURL)
+	// app.Get("/:url", routes.ResolveURL)
 	app.Post("/api/v1", routes.ShortenURL)
 }
 
@@ -26,9 +28,11 @@ func main() {
 
 	PORT := os.Getenv("APP_PORT")
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		AppName: "Blinkly",
+	})
 
-	app.use(logger.New())
+	app.Use(logger.New())
 
 	setupRoutes(app)
 
