@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/hitesh22rana/blinkly/database"
 	"github.com/hitesh22rana/blinkly/helpers"
 
@@ -28,6 +29,7 @@ type response struct {
 }
 
 var API_QUOTA string = os.Getenv("API_QUOTA")
+var API_DOMAIN string = os.Getenv("API_DOMAIN")
 
 func ShortenURL(c *fiber.Ctx) error {
 	body := new(request)
@@ -49,7 +51,6 @@ func ShortenURL(c *fiber.Ctx) error {
 	if err == redis.Nil {
 		_ = rdb.Set(database.Ctx, IP, API_QUOTA, 30*60*time.Second).Err()
 	} else {
-		val, _ = rdb.Get(database.Ctx, IP).Result()
 		valInt, _ := strconv.Atoi(val)
 
 		if valInt <= 0 {
@@ -78,10 +79,58 @@ func ShortenURL(c *fiber.Ctx) error {
 	// Enforce HTTP
 	body.URL = helpers.EnforceHTTP(body.URL)
 
+	var id string
+
+	if body.CustomShort == "" {
+		id = uuid.New().String()[:6]
+	} else {
+		id = body.CustomShort
+	}
+
+	rdbId := database.CreateClient(0)
+	defer rdbId.Close()
+
+	val, _ = rdbId.Get(database.Ctx, id).Result()
+
+	if val != "" {
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+			"error": "Custom URL already exists",
+		})
+	}
+
+	// Check if expiry is valid
+	if body.Expiry < 0 || body.Expiry > 24*time.Hour {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid expiry",
+		})
+	}
+
+	// Store URL in Redis
+	err = rdbId.Set(database.Ctx, id, body.URL, body.Expiry*3600*time.Second).Err()
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Something went wrong",
+		})
+	}
+
+	resp := response{
+		URL:             body.URL,
+		CustomShort:     "",
+		Expiry:          body.Expiry,
+		XRateRemaining:  10,
+		XRateLimitReset: 30,
+	}
+
 	rdb.Decr(database.Ctx, IP)
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "URL shortened successfully",
-		"data":    body,
-	})
+	val, _ = rdb.Get(database.Ctx, IP).Result()
+	resp.XRateRemaining, _ = strconv.Atoi(val)
+
+	ttl, _ := rdb.TTL(database.Ctx, IP).Result()
+	resp.XRateLimitReset = ttl / time.Nanosecond / time.Minute
+
+	resp.CustomShort = API_DOMAIN + "/" + id
+
+	return c.Status(fiber.StatusOK).JSON(resp)
 }
