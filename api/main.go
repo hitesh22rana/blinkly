@@ -13,6 +13,8 @@ import (
 	"github.com/hitesh22rana/blinkly/routes"
 )
 
+var PORT string = os.Getenv("APP_PORT")
+
 func setupRoutes(app *fiber.App) {
 	app.Get("/:url", routes.ResolveURL)
 	app.Post("/api/v1", routes.ShortenURL)
@@ -25,8 +27,6 @@ func main() {
 		fmt.Println("Error loading .env file")
 		return
 	}
-
-	PORT := os.Getenv("APP_PORT")
 
 	app := fiber.New(fiber.Config{
 		AppName: "Blinkly",
